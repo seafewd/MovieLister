@@ -15,6 +15,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
 
 public class Main {
     public static void main(String[] args) throws FileNotFoundException {
@@ -127,6 +128,9 @@ public class Main {
     public static void getDirectorWithMostMovies(List<Movie> movies) {
         //print name of director who made the most movies & their list of movie titles
 
+        //list of movies
+        List<String> titleList = movies.stream().map(x -> x.getTitle()).collect(Collectors.toList());
+
         //list of directors (only the first name in director list), empty entries filtered out
         List<String> directorList = movies.stream().map(x -> x.getDirectors().get(0)).filter(x -> !x.isEmpty()).collect(Collectors.toList());
 
@@ -134,11 +138,14 @@ public class Main {
         Map<String, Long> occurrences = directorList.stream().collect(Collectors.groupingBy(w -> w, Collectors.counting()));
 
         //sort the list and save only the director with the most movies
-        occurrences.entrySet().stream().sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(1).forEach(System.out::println);
+        //FIXME: extract string value from the (only) key in the occurrences map
+        occurrences = occurrences.entrySet().stream().sorted(Map.Entry.<String, Long> comparingByValue().reversed()).limit(1).collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+        Map<Long, String> occurrencesInversed = occurrences.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 
-        List<String> titleList = movies.stream().map(x -> x.getTitle()).collect(Collectors.toList());
-        Map<String, List<String>> directorWithMovies;
+        System.out.println("Director who made the largest number of movies: D. W. Griffith, " + occurrences.get("D. W. Griffith"));
+        System.out.println("List of director's movies: " /*+ print list*/);
 
-
+        //map director name with their list of movies
+        //Map<String, List<String>> directorWithMovies = titleList.stream().collect(groupingBy(directorName, counting()));
     }
 }
