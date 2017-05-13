@@ -22,17 +22,23 @@ public class Main {
         //save all movie objects in a list
         List<Movie> movies = Movie.readMovies("movies.txt");
 
-        //printNumberOfMovies(movies);
-        //System.out.println("Movies starting with the letter X: " + getStartsWith(movies, "X"));
-        //System.out.println("Number of movies where director name is missing: " + getNumberOfNoDirectors(movies));
-        //System.out.println("Number of movies where directors are also actors: " + getNumberOfMoviesWhereDirectorsAreActors(movies));
-
-        //System.out.println("Number of total actor names, counting duplicates: " + getNumberOfActorNames(movies, "dup"));
-        //System.out.println("Number of total actor names, not counting duplicates: " + getNumberOfActorNames(movies, "dis"));
-        //System.out.println("Movie with max actors: " + getMovieWithMaxActors(movies));
-        //getMovieStarting(movies);
-        //getMovieWithMaxActors(movies);
-        //getTop1OccurringTitles(movies);
+        printNumberOfMovies(movies);
+        System.out.println("---------------------------------");
+        System.out.println("Number of movies where director name is missing: " + getNumberOfNoDirectors(movies));
+        System.out.println("---------------------------------");
+        System.out.println("Movies starting with the letter X: " + getStartsWith(movies, "X"));
+        System.out.println("---------------------------------");
+        System.out.println("Number of movies where directors are also actors: " + getNumberOfMoviesWhereDirectorsAreActors(movies));
+        System.out.println("---------------------------------");
+        getMovieWithMaxActors(movies);
+        System.out.println("---------------------------------");
+        System.out.println("Number of total actor names, counting duplicates: " + getNumberOfActorNames(movies, "dup"));
+        System.out.println("Number of total actor names, not counting duplicates: " + getNumberOfActorNames(movies, "dis"));
+        System.out.println("---------------------------------");
+        getMovieStarting(movies);
+        System.out.println("---------------------------------");
+        getTop10OccurringTitles(movies);
+        System.out.println("---------------------------------");
         getDirectorWithMostMovies(movies);
     }
 
@@ -45,8 +51,7 @@ public class Main {
 
     public static void printNumberOfMovies(List<Movie> movies) {
         //print number of movies
-        System.out.println("Total number of movies in list: " + movies.size());
-
+        System.out.println("Total number of movies in list: " + movies.stream().count());
     }
 
     public static List<Movie> getStartsWith(List<Movie> movies, String character) {
@@ -86,14 +91,30 @@ public class Main {
 
     public static void getMovieWithMaxActors(List<Movie> movies) {
         long maxActors = 0;
+
+        //find number of actors in the movie with the most amount of actors
         List<List<String>> outerList = movies.stream().map(x -> x.getActors()).collect(Collectors.toList());
-        /*for (List innerList : outerList) {
+        for (List innerList : outerList) {
             int innerListLength = innerList.size();
             if (innerListLength > maxActors) {
                 maxActors = innerListLength;
             }
-        }*/
-        System.out.println(movies.stream().map(x -> x.getActors()).min(Comparator.comparing(List<String>::size)).get());
+        }
+
+        long maxActorsInMovie = maxActors;
+
+        //find the movie title with max number of actors
+        List<String> movieList = movies.stream().filter(x -> x.getActors().size() == maxActorsInMovie).map(x -> x.getTitle()).collect(Collectors.toList());
+        String movie = movieList.get(0);
+
+        //find the director's name
+        List<List<String>> directorsOuter = movies.stream().filter(x -> x.getActors().size() == maxActorsInMovie).map(x -> x.getDirectors()).collect(Collectors.toList());
+        List<String> directors = directorsOuter.get(0);
+
+        System.out.println("Movie with most amount of actors: " + movie);
+        System.out.println("Number of actors: " + maxActorsInMovie);
+        System.out.println("Director name(s): " + directors);
+
     }
 
     public static void getMovieStarting(List<Movie> movies) {
@@ -109,9 +130,10 @@ public class Main {
             System.out.print("[" + map.getKey() + "]: ");
             System.out.print(map.getValue().stream().count() + " ");
         }
+        System.out.print("\n");
     }
 
-    public static void getTop1OccurringTitles(List<Movie> movies) {
+    public static void getTop10OccurringTitles(List<Movie> movies) {
         List<String> titleList = movies.stream().map(x -> x.getTitle()).collect(Collectors.toList());
 
         //list with only the first word
@@ -138,14 +160,17 @@ public class Main {
         Map<String, Long> occurrences = directorList.stream().collect(Collectors.groupingBy(w -> w, Collectors.counting()));
 
         //sort the list and save only the director with the most movies
-        //FIXME: extract string value from the (only) key in the occurrences map
+        //FIXME: extract string value from the (only) key in the occurrences map???
         occurrences = occurrences.entrySet().stream().sorted(Map.Entry.<String, Long> comparingByValue().reversed()).limit(1).collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
         Map<Long, String> occurrencesInversed = occurrences.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 
-        System.out.println("Director who made the largest number of movies: D. W. Griffith, " + occurrences.get("D. W. Griffith"));
-        System.out.println("List of director's movies: " /*+ print list*/);
+        //FIXME: make this solution smarter... what if the value changes?
+        String director = occurrencesInversed.get(158l);
 
-        //map director name with their list of movies
-        //Map<String, List<String>> directorWithMovies = titleList.stream().collect(groupingBy(directorName, counting()));
+        //get list of movies from this director
+        List<String> movieTitles = movies.stream().filter(x -> x.getDirectors().get(0).equals(director)).map(x -> x.getTitle()).collect(Collectors.toList());
+
+        System.out.println("Director who made the largest number of movies: " + director);
+        System.out.println("List of director's movies: " + movieTitles);
     }
 }
