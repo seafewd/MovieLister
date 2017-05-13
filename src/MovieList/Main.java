@@ -9,23 +9,37 @@ import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.counting;
 
 public class Main {
     public static void main(String[] args) throws FileNotFoundException {
         //save all movie objects in a list
         List<Movie> movies = Movie.readMovies("movies.txt");
 
-        printNumberOfMovies(movies);
-        System.out.println("Movies starting with the letter X: " + getStartsWith(movies, "X"));
-        System.out.println("Number of movies where director name is missing: " + getNumberOfNoDirectors(movies));
+        //printNumberOfMovies(movies);
+        //System.out.println("Movies starting with the letter X: " + getStartsWith(movies, "X"));
+        //System.out.println("Number of movies where director name is missing: " + getNumberOfNoDirectors(movies));
         //System.out.println("Number of movies where directors are also actors: " + getNumberOfMoviesWhereDirectorsAreActors(movies));
 
-        System.out.println("Number of total actor names, counting duplicates: " + getNumberOfActorNames(movies, "dup"));
-        System.out.println("Number of total actor names, not counting duplicates: " + getNumberOfActorNames(movies, "dis"));
+        //System.out.println("Number of total actor names, counting duplicates: " + getNumberOfActorNames(movies, "dup"));
+        //System.out.println("Number of total actor names, not counting duplicates: " + getNumberOfActorNames(movies, "dis"));
         //System.out.println("Movie with max actors: " + getMovieWithMaxActors(movies));
-        getMovieWithMaxActors(movies);
+        //getMovieStarting(movies);
+        //getMovieWithMaxActors(movies);
+        //getTop1OccurringTitles(movies);
+        getDirectorWithMostMovies(movies);
+    }
+
+    public static String findFirstWord(String s) {
+        if(s.contains(" ")){
+            s = s.substring(0, s.indexOf(" "));
+        }
+        return s;
     }
 
     public static void printNumberOfMovies(List<Movie> movies) {
@@ -72,11 +86,59 @@ public class Main {
     public static void getMovieWithMaxActors(List<Movie> movies) {
         long maxActors = 0;
         List<List<String>> outerList = movies.stream().map(x -> x.getActors()).collect(Collectors.toList());
-        outerList.stream().forEach(System.out::println);
-        //movies.stream().map(Movie::getActors).mapToInt(outerList.size()).count();
-
-        //for (List actorList : outerList) System.out.println(actorList);
-        //return maxActors;
+        /*for (List innerList : outerList) {
+            int innerListLength = innerList.size();
+            if (innerListLength > maxActors) {
+                maxActors = innerListLength;
+            }
+        }*/
+        System.out.println(movies.stream().map(x -> x.getActors()).min(Comparator.comparing(List<String>::size)).get());
     }
 
+    public static void getMovieStarting(List<Movie> movies) {
+        List<String> titleList = movies.stream()
+                .map(x -> x.getTitle())
+                .collect(Collectors.toList());
+
+        Map<String, List<String>> startsWith = titleList.stream()
+                .collect(Collectors.groupingBy(x -> x.substring(0, 1)));
+
+        System.out.println("Number of movies starting with the letter/character...");
+        for (Map.Entry<String, List<String>> map : startsWith.entrySet()) {
+            System.out.print("[" + map.getKey() + "]: ");
+            System.out.print(map.getValue().stream().count() + " ");
+        }
+    }
+
+    public static void getTop1OccurringTitles(List<Movie> movies) {
+        List<String> titleList = movies.stream().map(x -> x.getTitle()).collect(Collectors.toList());
+
+        //list with only the first word
+        List<String> firstWords = titleList.stream().map(s -> findFirstWord(s)).collect(Collectors.toList());
+
+        //find occurrences of the first word
+        Map<String, Long> occurrences = firstWords.stream().collect(Collectors.groupingBy(w -> w, Collectors.counting()));
+
+        //sort list by descending, limit to only top 10 and print
+        System.out.println("Top 10 movies starting with the word...");
+        occurrences.entrySet().stream().sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(10).forEach(System.out::println);
+    }
+
+    public static void getDirectorWithMostMovies(List<Movie> movies) {
+        //print name of director who made the most movies & their list of movie titles
+
+        //list of directors (only the first name in director list), empty entries filtered out
+        List<String> directorList = movies.stream().map(x -> x.getDirectors().get(0)).filter(x -> !x.isEmpty()).collect(Collectors.toList());
+
+        //find occurrences of director names
+        Map<String, Long> occurrences = directorList.stream().collect(Collectors.groupingBy(w -> w, Collectors.counting()));
+
+        //sort the list and save only the director with the most movies
+        occurrences.entrySet().stream().sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(1).forEach(System.out::println);
+
+        List<String> titleList = movies.stream().map(x -> x.getTitle()).collect(Collectors.toList());
+        Map<String, List<String>> directorWithMovies;
+
+
+    }
 }
